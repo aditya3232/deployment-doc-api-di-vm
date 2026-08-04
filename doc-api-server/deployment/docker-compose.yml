@@ -6,7 +6,7 @@ services:
       dockerfile: Dockerfile
     image: doc-api-service:latest
     container_name: doc-api-service-1
-    expose: # port hanya terlihat oleh container lain di network yang sama
+    ports: # port hanya terlihat oleh container lain di network yang sama
       - "${DOC_API_SERVICE_1_HOST_PORT}:${DOC_API_SERVICE_1_HOST_PORT}"
     environment:
       APP_PORT: ${DOC_API_SERVICE_1_HOST_PORT}
