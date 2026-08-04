@@ -7,9 +7,9 @@ services:
     image: doc-api-service:latest
     container_name: doc-api-service-1
     expose: # port hanya terlihat oleh container lain di network yang sama
-      - "${DOC_API_SERVICE_1_CONT_PORT}"
+      - "${DOC_API_SERVICE_1_HOST_PORT}:{DOC_API_SERVICE_1_HOST_PORT}"
     environment:
-      APP_PORT: ${DOC_API_SERVICE_1_CONT_PORT}
+      APP_PORT: ${DOC_API_SERVICE_1_HOST_PORT}
       APP_ENV: ${APP_ENV}
       APP_NAME: ${DOC_API_SERVICE_1_NAME}
       WEB_PREFORK: ${WEB_PREFORK}
