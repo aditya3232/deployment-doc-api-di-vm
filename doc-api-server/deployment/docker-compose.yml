@@ -1,17 +1,17 @@
 name: doc-api
 services:
-  doc-api-service-1:
+  doc-api-service-1: # ganti dengan 2 di vm lain
     build:
       context: ..
       dockerfile: Dockerfile
     image: doc-api-service:latest
-    container_name: doc-api-service-1
+    container_name: doc-api-service-1 # ganti dengan 2 di vm lain
     ports: # port hanya terlihat oleh container lain di network yang sama
-      - "${DOC_API_SERVICE_1_HOST_PORT}:${DOC_API_SERVICE_1_HOST_PORT}"
+      - "${DOC_API_SERVICE_1_HOST_PORT}:${DOC_API_SERVICE_1_HOST_PORT}" # ganti dengan 2 di vm lain
     environment:
-      APP_PORT: ${DOC_API_SERVICE_1_HOST_PORT}
+      APP_PORT: ${DOC_API_SERVICE_1_HOST_PORT} # ganti dengan 2 di vm lain
       APP_ENV: ${APP_ENV}
-      APP_NAME: ${DOC_API_SERVICE_1_NAME}
+      APP_NAME: ${DOC_API_SERVICE_1_NAME} # ganti dengan 2 di vm lain
       WEB_PREFORK: ${WEB_PREFORK}
       LOG_LEVEL: ${LOG_LEVEL}
       JWT_SECRET_KEY: ${JWT_SECRET}
