@@ -70,16 +70,19 @@ sudo usermod -aG docker $USER
 - sudo apt install git
 
 ## 10. Clone Project
+```bash
+git clone https://github.com/aditya3232/deployment-doc-api-di-vm.git
+```
 
 ## 11. Build Dockerfile (Jika mau build dulu)
 ```bash
-cd ./deployment-doc-api-di-vm
+cd ./deployment-doc-api-di-vm/doc-api-server
 docker build -t doc-api-service .
 ```
 
 ## 12. Run
 ```bash
-cd ./deployment-doc-api-di-vm/deployment
+cd ./deployment-doc-api-di-vm/doc-api-server/deployment
 docker compose up -d --build
 ```
 - cek apakah container berjalan
