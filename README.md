@@ -186,7 +186,7 @@ Jika sudah, lakukan restart service HAProxy menggunakan perintah berikut
 sudo systemctl restart haproxy.service
 ```
 ## 10. HA Testing 2
-Untuk melakukan pengujian silakan coba akses aplikasi yang berjalan menggunakan VIP (Virtual IP). Buka halaman http://[vip-address]/swagger dan seharus akan muncul tampilan aplikasi seperti pada skenario sebelumnya. 
+Untuk melakukan pengujian silakan coba akses aplikasi yang berjalan menggunakan VIP (Virtual IP). Buka halaman http://[vip-address]/health dan seharunya akan muncul tampilan aplikasi seperti pada skenario sebelumnya. 
 Pada kondisi ini, aplikasi dan load balancer sudah berjalan secara redundant. Untuk melakukan pengujian coba beberapa hal berikut:
 
 - Matikan salah satu aplikasi dan perhatikan apakah aplikasi tersebut masih dapat diakses dan berfungsi dengan baik.
