@@ -191,6 +191,40 @@ Pada kondisi ini, aplikasi dan load balancer sudah berjalan secara redundant. Un
 
 - Matikan salah satu aplikasi dan perhatikan apakah aplikasi tersebut masih dapat diakses dan berfungsi dengan baik.
 - Matikan salah satu load balancer dan perhatikan apakah aplikasi tersebut masih dapat diakses dan berfungsi dengan baik.
+- nanti kalau kita matikan HAProxy-1 maka HAProxy kedua akan menjadi MASTER-STATE
+
+<p align="left">
+  <img src="./assets-markdown/tes-vip.png" alt="Topic" width="50%">
+</p>
 
 ## 11. Summary
 Pada skenario ini penerapan HA dilakukan pada bagian Aplikasi dan Load Balancer. Terdapat dua buah server yang menjalankan aplikasi dimana jika ada masalah pada salah satu node, maka aplikasi tetap dapat diakses dan berfungsi dengan baik. Di sisi Load Balancer juga terdapat dua node yang bekerja secara Active/Passive sehingga jika ada masalah pada bagian Load Balancer, aplikasi dibelakangnya masih dapat diakses dengan baik. 
+
+```bash
+
+               +----------------------+
+               |      Client          |
+               +----------+-----------+
+                          |
+                          |
+                  192.168.122.10 (VIP)
+                          |
+             +------------+------------+
+             |                         |
+      +------+-------+         +-------+------+
+      | HAProxy-1    |         | HAProxy-2    |
+      | Priority 100 |         | Priority 90  |
+      | MASTER       |         | BACKUP       |
+      +------+-------+         +-------+------+
+             |                         |
+             +------------+------------+
+                          |
+                   Load Balancing
+                          |
+             +------------+------------+
+             |                         |
+      +------+-------+         +-------+------+
+      | Backend-1    |         | Backend-2    |
+      +--------------+         +--------------+
+
+```
