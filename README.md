@@ -198,7 +198,13 @@ Pada kondisi ini, aplikasi dan load balancer sudah berjalan secara redundant. Un
 </p>
 
 ## 11. Summary
-Pada skenario ini penerapan HA dilakukan pada bagian Aplikasi dan Load Balancer. Terdapat dua buah server yang menjalankan aplikasi dimana jika ada masalah pada salah satu node, maka aplikasi tetap dapat diakses dan berfungsi dengan baik. Di sisi Load Balancer juga terdapat dua node yang bekerja secara Active/Passive sehingga jika ada masalah pada bagian Load Balancer, aplikasi dibelakangnya masih dapat diakses dengan baik. 
+Pada skenario ini telah diterapkan mekanisme High Availability (HA) pada dua bagian, yaitu aplikasi dan load balancer.
+
+Pada sisi aplikasi terdapat dua buah server backend yang berjalan secara redundan. Dengan adanya HAProxy sebagai load balancer, permintaan dari client akan didistribusikan ke server backend yang masih aktif. Apabila salah satu server backend mengalami gangguan atau berhenti berjalan, aplikasi tetap dapat diakses melalui server backend lainnya.
+
+Pada sisi load balancer digunakan dua node HAProxy yang dikonfigurasi menggunakan Keepalived dengan mekanisme Active/Passive. Keepalived mengelola sebuah Virtual IP (VIP) yang selalu digunakan oleh client untuk mengakses aplikasi. Ketika node HAProxy yang berperan sebagai MASTER mengalami gangguan atau layanan HAProxy berhenti berjalan, Keepalived secara otomatis memindahkan VIP ke node BACKUP sehingga node tersebut menjadi MASTER dan tetap melayani permintaan dari client.
+
+Berdasarkan hasil pengujian, mekanisme failover pada backend maupun load balancer berjalan dengan baik. Aplikasi tetap dapat diakses menggunakan Virtual IP (VIP) tanpa perlu mengubah alamat akses, sehingga ketersediaan layanan (High Availability) tetap terjaga meskipun salah satu node mengalami kegagalan.
 
 ```bash
 
