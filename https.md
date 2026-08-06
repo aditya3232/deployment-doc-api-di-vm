@@ -56,3 +56,12 @@ sudo systemctl restart haproxy
 ```bash
 sudo systemctl status haproxy
 ```
+
+## 4. Tes
+- jika waktu menajalankan perintah sudo ss -tulpn | grep haproxy
+
+<p align="left">
+  <img src="./assets-markdown/tes-https.png" alt="Topic" width="50%">
+</p>
+
+maka sudah berhasil.
