@@ -96,7 +96,6 @@ Struktur project secara keseluruhan:
 │   │   │   │   ├── health_check_entity.go
 │   │   │   │   ├── jwt_entity.go
 │   │   │   │   └── user_entity.go
-│   │   │   │
 │   │   │   └── model
 │   │   │       └── user_model.go
 │   │   │
@@ -173,23 +172,11 @@ main.go
 
 `main.go` merupakan entry point utama aplikasi.
 
-Tanggung jawabnya biasanya adalah menjalankan aplikasi:
-
-```text
-main.go
-   │
-   ▼
-cmd
-   │
-   ▼
-app
-```
-
-`main.go` sebaiknya tidak berisi business logic.
+Tanggung jawabnya adalah menjalankan aplikasi dan meneruskan proses bootstrap kepada layer aplikasi.
 
 Prinsipnya:
 
-> `main.go` hanya menjadi titik awal aplikasi, sedangkan proses konfigurasi dan bootstrap aplikasi dilakukan oleh layer lain.
+> `main.go` tidak seharusnya berisi business logic.
 
 ---
 
@@ -206,22 +193,10 @@ Package `cmd` bertanggung jawab terhadap **command-line interface dan applicatio
 Contohnya:
 
 ```text
-cmd/start.go
+go run main.go start
 ```
 
-digunakan untuk menjalankan aplikasi.
-
-Sedangkan:
-
-```text
-cmd/root.go
-```
-
-digunakan sebagai root command.
-
-Dengan pemisahan ini, aplikasi dapat memiliki beberapa command apabila dibutuhkan.
-
-Contohnya:
+Dengan pemisahan ini, aplikasi dapat memiliki command lain apabila dibutuhkan, seperti:
 
 ```text
 go run main.go start
@@ -229,7 +204,7 @@ go run main.go worker
 go run main.go migrate
 ```
 
-tanpa harus menempatkan seluruh logic command tersebut di `main.go`.
+tanpa menempatkan seluruh logic command tersebut di `main.go`.
 
 ---
 
@@ -245,21 +220,11 @@ config/
 └── zerolog.go
 ```
 
-Layer ini bertanggung jawab terhadap **application configuration dan initialization terhadap infrastructure**.
+Package `config` bertanggung jawab terhadap **application configuration dan initialization infrastructure**.
 
 ### `config.go`
 
 Mengelola konfigurasi umum aplikasi.
-
-Contohnya:
-
-```text
-environment
-application name
-port
-database configuration
-redis configuration
-```
 
 ### `database.go`
 
@@ -298,56 +263,37 @@ Mengatur konfigurasi logging menggunakan Zerolog.
 ```text
 database/
 ├── migrations/
-│   ├── 000001_create_users_table.down.sql
-│   └── 000001_create_users_table.up.sql
-│
 └── seeds/
-    └── user_seed.go
 ```
 
-Package ini menangani kebutuhan database yang bersifat **database lifecycle**.
+Package ini menangani kebutuhan database yang berkaitan dengan **schema lifecycle dan initial data**.
 
 ## Migrations
 
-Migration digunakan untuk mengelola perubahan schema database.
-
-Contohnya:
-
 ```text
 000001_create_users_table.up.sql
-```
-
-digunakan untuk membuat tabel.
-
-Sedangkan:
-
-```text
 000001_create_users_table.down.sql
 ```
 
-digunakan untuk rollback migration.
+Digunakan untuk membuat dan melakukan rollback schema database.
 
 ## Seeds
-
-Seeds digunakan untuk memasukkan initial atau dummy data.
-
-Contohnya:
 
 ```text
 user_seed.go
 ```
 
-digunakan untuk memasukkan data awal user.
+Digunakan untuk memasukkan data awal atau dummy data.
 
 ---
 
 # 7. `internal/`
 
-Package `internal` merupakan bagian penting dari aplikasi.
+Package `internal` digunakan untuk menyimpan implementation detail aplikasi.
 
-Dalam Go, package di bawah directory `internal` hanya dapat di-import oleh package yang berada di parent tree yang sesuai.
+Dalam Go, package di dalam directory `internal` tidak dapat digunakan secara bebas oleh package dari luar parent tree yang diperbolehkan.
 
-Dengan demikian, `internal` dapat digunakan untuk menyimpan **implementation detail aplikasi yang tidak dimaksudkan untuk digunakan oleh external package**.
+Dengan demikian, `internal` cocok digunakan untuk application-specific implementation.
 
 Strukturnya:
 
@@ -369,9 +315,9 @@ internal/core/
 └── service/
 ```
 
-`core` merupakan bagian utama dari business/application logic.
+`core` merupakan bagian utama yang berisi **business/application logic**.
 
-Di dalamnya terdapat:
+Terdiri dari:
 
 ```text
 domain
@@ -388,7 +334,7 @@ core/domain/
 └── model/
 ```
 
-Layer domain merepresentasikan object dan konsep yang berkaitan dengan aplikasi.
+Domain merepresentasikan object dan konsep yang digunakan dalam business domain aplikasi.
 
 ## `entity/`
 
@@ -399,9 +345,7 @@ entity/
 └── user_entity.go
 ```
 
-Entity merepresentasikan objek utama yang digunakan oleh aplikasi.
-
-Contohnya:
+Berisi entity seperti:
 
 ```text
 User
@@ -409,42 +353,28 @@ JWT
 Health Check
 ```
 
-Entity biasanya memiliki lifecycle atau identitas tertentu di dalam business domain.
+Entity merepresentasikan object yang memiliki makna dalam domain aplikasi.
 
-Contoh:
-
-```go
-type User struct {
-    ID    string
-    Name  string
-    Email string
-}
-```
-
----
-
-# 10. `core/domain/model/`
+## `model/`
 
 ```text
 model/
 └── user_model.go
 ```
 
-Model dapat digunakan untuk merepresentasikan bentuk data tertentu yang dibutuhkan oleh application atau domain.
+Model merepresentasikan bentuk data yang diperlukan oleh aplikasi.
 
-Pemisahan `entity` dan `model` memungkinkan aplikasi membedakan:
+Pemisahan ini memungkinkan aplikasi membedakan:
 
 ```text
 Business Entity
       vs
-Data Model
+Data/Application Model
 ```
-
-Walaupun implementasinya dapat berbeda tergantung kebutuhan aplikasi.
 
 ---
 
-# 11. `internal/core/service/`
+# 10. `internal/core/service/`
 
 ```text
 core/service/
@@ -455,24 +385,13 @@ core/service/
 
 Service merupakan bagian yang menangani **business/application logic**.
 
-Ini adalah salah satu bagian paling penting dalam arsitektur.
-
 Contohnya:
 
 ```text
 user_service.go
 ```
 
-dapat menangani:
-
-```text
-Create User
-Get User
-Update User
-Delete User
-```
-
-Sedangkan:
+menangani business logic yang berkaitan dengan User.
 
 ```text
 jwt_service.go
@@ -480,19 +399,13 @@ jwt_service.go
 
 menangani logic yang berkaitan dengan JWT.
 
-Dan:
-
 ```text
 health_check_service.go
 ```
 
 menangani logic health check.
 
-Prinsip penting:
-
-> Handler sebaiknya tidak mengandung business logic yang kompleks. Business logic ditempatkan di service.
-
-Contoh alur:
+Secara umum:
 
 ```text
 HTTP Request
@@ -504,12 +417,14 @@ User Handler
 User Service
      │
      ▼
-User Repository
+Repository
 ```
+
+Business logic utama sebaiknya berada di service, bukan di handler.
 
 ---
 
-# 12. `internal/adapter/`
+# 11. `internal/adapter/`
 
 ```text
 internal/adapter/
@@ -518,13 +433,12 @@ internal/adapter/
 └── storage/
 ```
 
-Adapter berfungsi sebagai penghubung antara application/core dengan dunia luar.
+Adapter merupakan penghubung antara application core dengan external system.
 
-Secara konsep:
+Secara konseptual:
 
 ```text
                   Application Core
-                         │
                          │
                   ┌──────┴──────┐
                   │   Adapter   │
@@ -535,11 +449,11 @@ Secara konsep:
              HTTP      Database    MinIO
 ```
 
-Dengan demikian core tidak perlu mengetahui detail implementasi external system secara langsung.
+Adapter menangani detail teknis dari external system.
 
 ---
 
-# 13. `internal/adapter/handler/`
+# 12. `internal/adapter/handler/`
 
 ```text
 adapter/handler/
@@ -552,18 +466,16 @@ adapter/handler/
 
 Handler merupakan **delivery layer**.
 
-Tanggung jawab handler:
+Tanggung jawabnya:
 
 * menerima HTTP request
-* melakukan parsing request
-* melakukan validation pada input
+* parsing request
+* melakukan input validation
 * memanggil service
 * mengubah hasil service menjadi HTTP response
 * menentukan HTTP status code
 
-Handler sebaiknya tidak menjadi tempat business logic utama.
-
-Alur:
+Alurnya:
 
 ```text
 Client
@@ -578,14 +490,14 @@ Service
 
 ---
 
-# 14. `handler/request/`
+# 13. `handler/request/`
 
 ```text
 handler/request/
 └── user_request.go
 ```
 
-Package ini menyimpan object yang digunakan untuk menerima HTTP request.
+Berisi object yang digunakan untuk menerima HTTP request.
 
 Contohnya:
 
@@ -596,19 +508,21 @@ type CreateUserRequest struct {
 }
 ```
 
-Dengan adanya request object, bentuk HTTP request tidak harus langsung menggunakan domain entity.
-
-Ini membantu memisahkan:
+Dengan demikian HTTP request tidak harus langsung menggunakan domain entity.
 
 ```text
 HTTP Contract
-      vs
-Domain Object
+      │
+      ▼
+Request Object
+      │
+      ▼
+Application / Domain
 ```
 
 ---
 
-# 15. `handler/response/`
+# 14. `handler/response/`
 
 ```text
 handler/response/
@@ -616,9 +530,9 @@ handler/response/
 └── user_response.go
 ```
 
-Response digunakan untuk menentukan bentuk data yang dikirim kembali kepada client.
+Digunakan untuk menentukan bentuk response yang dikirim kepada client.
 
-Contohnya:
+Alurnya:
 
 ```text
 User Entity
@@ -630,20 +544,20 @@ User Response
 JSON Response
 ```
 
-Dengan demikian domain entity tidak harus selalu diekspos secara langsung kepada API client.
+Dengan demikian domain entity tidak harus diekspos secara langsung kepada API client.
 
 ---
 
-# 16. `internal/adapter/repository/`
+# 15. `internal/adapter/repository/`
 
 ```text
 adapter/repository/
 └── user_repository.go
 ```
 
-Repository merupakan adapter untuk komunikasi dengan database.
+Repository bertanggung jawab terhadap komunikasi dengan database.
 
-Tanggung jawabnya meliputi:
+Contohnya:
 
 ```text
 INSERT
@@ -652,7 +566,7 @@ UPDATE
 DELETE
 ```
 
-Contohnya:
+Alurnya:
 
 ```text
 User Service
@@ -664,22 +578,18 @@ User Repository
 PostgreSQL
 ```
 
-Service tidak perlu mengetahui detail SQL atau ORM yang digunakan.
-
-Dengan begitu database implementation dapat diganti tanpa mengubah business logic secara besar-besaran.
+Service tidak perlu mengetahui detail query SQL atau implementasi ORM.
 
 ---
 
-# 17. `internal/adapter/storage/`
+# 16. `internal/adapter/storage/`
 
 ```text
 adapter/storage/
 └── minio.go
 ```
 
-Package ini merupakan adapter untuk object storage.
-
-Dalam project ini menggunakan MinIO.
+Digunakan sebagai adapter untuk object storage seperti MinIO.
 
 Alurnya:
 
@@ -696,25 +606,25 @@ Storage Adapter
 MinIO
 ```
 
-Contohnya dapat digunakan untuk:
+Contohnya dapat menangani:
 
 ```text
-Upload image
-Download object
-Delete object
-Generate presigned URL
+Upload Image
+Download Object
+Delete Object
+Presigned URL
 ```
 
 ---
 
-# 18. `internal/middleware/`
+# 17. `internal/middleware/`
 
 ```text
 internal/middleware/
 └── middleware_adapter.go
 ```
 
-Middleware merupakan **cross-cutting concern** yang digunakan oleh banyak bagian aplikasi.
+Middleware merupakan **cross-cutting concern** yang dapat digunakan oleh banyak endpoint atau module.
 
 Contohnya:
 
@@ -723,14 +633,12 @@ Authentication
 Authorization
 Logging
 Recovery
-Request ID
 CORS
 Rate Limiting
+Request ID
 ```
 
-Middleware berada di luar business domain karena fungsinya dapat digunakan oleh banyak endpoint atau module.
-
-Contohnya:
+Alur request:
 
 ```text
 Request
@@ -747,16 +655,16 @@ Service
 
 ---
 
-# 19. `internal/app/`
+# 18. `internal/app/`
 
 ```text
 internal/app/
 └── app.go
 ```
 
-Package `app` berfungsi sebagai **application composition / bootstrap layer**.
+`app` berfungsi sebagai **composition root / application bootstrap**.
 
-Di sinilah berbagai dependency dapat dirangkai.
+Di sini dependency antar-component dirangkai.
 
 Contohnya:
 
@@ -781,18 +689,18 @@ Handlers
 Fiber Router
 ```
 
-Dengan kata lain, `app.go` dapat menjadi tempat untuk melakukan dependency injection.
+Dengan demikian `app.go` dapat menjadi tempat untuk melakukan dependency injection.
 
 ---
 
-# 20. `deployment/`
+# 19. `deployment/`
 
 ```text
 deployment/
 └── docker-compose.yml
 ```
 
-Berisi konfigurasi deployment atau infrastructure untuk menjalankan aplikasi dan dependency-nya.
+Berisi konfigurasi deployment dan infrastructure untuk menjalankan aplikasi beserta dependency-nya.
 
 Contohnya:
 
@@ -803,11 +711,9 @@ Redis
 MinIO
 ```
 
-Docker Compose membantu menjalankan environment secara konsisten.
-
 ---
 
-# 21. `Dockerfile`
+# 20. `Dockerfile`
 
 ```text
 Dockerfile
@@ -815,7 +721,7 @@ Dockerfile
 
 Digunakan untuk membuat container image aplikasi.
 
-Biasanya Dockerfile dapat menggunakan multi-stage build:
+Jika menggunakan multi-stage build:
 
 ```text
 Build Stage
@@ -830,35 +736,404 @@ Binary
 Runtime Stage
 ```
 
-Keuntungan utamanya adalah runtime image dapat dibuat lebih kecil dan tidak perlu membawa compiler Go.
+Runtime image tidak perlu membawa seluruh environment development dan compiler Go.
 
 ---
 
-# 22. `utils/`
+# 21. `utils/`
 
 ```text
 utils/
 └── conv.go
 ```
 
-Berisi utility atau helper yang bersifat generic.
+Berisi helper yang bersifat generic.
 
 Contohnya conversion function.
 
-Utility sebaiknya tetap sederhana dan tidak berisi business logic.
+Utility sebaiknya tidak berisi business logic.
 
-Jika sebuah helper hanya digunakan oleh satu domain, lebih baik helper tersebut ditempatkan di domain/module terkait daripada dimasukkan ke `utils`.
+Jika sebuah helper hanya digunakan oleh satu domain, lebih baik helper tersebut ditempatkan pada domain terkait.
 
 ---
 
-# 23. Dependency Flow
+# 22. Module Separation
 
-Secara keseluruhan, request flow aplikasi dapat digambarkan seperti berikut:
+Selain pemisahan berdasarkan layer, aplikasi juga telah melakukan **logical separation berdasarkan module/feature**.
+
+Contohnya module User terdiri dari:
+
+```text
+User Module
+│
+├── Entity
+│   └── user_entity.go
+│
+├── Model
+│   └── user_model.go
+│
+├── Service
+│   └── user_service.go
+│
+├── Repository
+│   └── user_repository.go
+│
+├── Handler
+│   └── user_handler.go
+│
+├── Request
+│   └── user_request.go
+│
+└── Response
+    └── user_response.go
+```
+
+Sedangkan JWT:
+
+```text
+JWT Module
+│
+├── Entity
+│   └── jwt_entity.go
+│
+└── Service
+    └── jwt_service.go
+```
+
+Health Check:
+
+```text
+Health Check Module
+│
+├── Entity
+│   └── health_check_entity.go
+│
+├── Service
+│   └── health_check_service.go
+│
+└── Handler
+    └── health_check_handler.go
+```
+
+Jadi walaupun secara filesystem setiap component masih berada pada layer masing-masing:
+
+```text
+core/
+adapter/
+```
+
+secara **logical architecture**, fitur atau module sudah dapat dibedakan.
+
+---
+
+# 23. Module Separation melalui Interface
+
+Pemisahan module tidak hanya dilakukan melalui struktur folder.
+
+Salah satu bagian yang lebih penting adalah **bagaimana module berkomunikasi satu sama lain**.
+
+Contohnya terdapat `UserService`:
+
+```go
+type userService struct {
+    repo       repository.UserRepositoryInterface
+    cfg        *config.Config
+    jwtService JwtServiceInterface
+    redis      *redis.Client
+}
+```
+
+Perhatikan dependency berikut:
+
+```go
+jwtService JwtServiceInterface
+```
+
+`UserService` tidak bergantung langsung kepada implementasi `JWT Service`.
+
+User module hanya mengetahui contract:
+
+```go
+type JwtServiceInterface interface {
+    // capability yang dibutuhkan User
+}
+```
+
+Dengan demikian User tidak perlu mengetahui:
+
+* bagaimana JWT dibuat
+* library JWT yang digunakan
+* bagaimana token di-sign
+* bagaimana secret key dikelola
+* bagaimana JWT di-parse
+
+User hanya mengetahui:
+
+> "Saya membutuhkan kemampuan dari JWT service."
+
+---
+
+# 24. Dependency melalui Interface
+
+Secara konseptual:
+
+```text
+┌──────────────────────┐
+│     User Module      │
+│                      │
+│    UserService       │
+└──────────┬───────────┘
+           │
+           │ depends on
+           ▼
+┌──────────────────────┐
+│ JwtServiceInterface  │
+└──────────┬───────────┘
+           ▲
+           │ implements
+           │
+┌──────────┴───────────┐
+│     JWT Module       │
+│                      │
+│    jwtService       │
+└──────────────────────┘
+```
+
+Jadi dependency tidak diarahkan langsung ke concrete implementation.
+
+```text
+User
+  │
+  ▼
+JwtServiceInterface
+  ▲
+  │
+JWT Service
+```
+
+Bukan:
+
+```text
+User
+  │
+  ▼
+Concrete JWT Service
+```
+
+---
+
+# 25. Dependency Inversion
+
+Pola tersebut merupakan penerapan prinsip **Dependency Inversion Principle (DIP)**.
+
+High-level module:
+
+```text
+UserService
+```
+
+tidak bergantung langsung kepada low-level implementation:
+
+```text
+JWT implementation
+```
+
+Keduanya berkomunikasi melalui abstraction:
+
+```text
+UserService
+      │
+      ▼
+JwtServiceInterface
+      ▲
+      │
+JwtService
+```
+
+Dengan demikian coupling menjadi lebih rendah.
+
+---
+
+# 26. Kenapa Interface Diletakkan di Sisi Consumer?
+
+Pada contoh:
+
+```go
+type userService struct {
+    jwtService JwtServiceInterface
+}
+```
+
+`UserService` mendefinisikan capability yang dia butuhkan.
+
+Ini merupakan pendekatan **consumer-driven interface**.
+
+Misalnya User hanya membutuhkan:
+
+```go
+type JwtServiceInterface interface {
+    GenerateToken(userID int64) (string, error)
+}
+```
+
+Maka User tidak perlu bergantung pada interface besar seperti:
+
+```go
+type JwtServiceInterface interface {
+    GenerateToken(...)
+    ValidateToken(...)
+    RefreshToken(...)
+    RevokeToken(...)
+    ParseClaims(...)
+    ...
+}
+```
+
+User hanya meminta capability yang memang dia perlukan.
+
+Prinsipnya:
+
+> **Consumer mendefinisikan interface berdasarkan kebutuhan consumer.**
+
+Hal ini juga membantu menjaga boundary antar-module.
+
+---
+
+# 27. Repository Interface
+
+Konsep yang sama juga terlihat pada repository.
+
+`UserService` menggunakan:
+
+```go
+repository.UserRepositoryInterface
+```
+
+Sehingga service tidak perlu mengetahui apakah repository menggunakan:
+
+```text
+GORM
+SQL
+PostgreSQL driver
+MySQL
+Mock repository
+```
+
+Secara konseptual:
+
+```text
+User Service
+      │
+      ▼
+UserRepositoryInterface
+      ▲
+      │
+      ├── PostgreSQL Repository
+      ├── Mock Repository
+      └── Test Repository
+```
+
+Business/application logic tetap bergantung kepada abstraction.
+
+---
+
+# 28. Constructor Injection
+
+Dependency tersebut kemudian diberikan melalui constructor:
+
+```go
+func NewUserService(
+    repo repository.UserRepositoryInterface,
+    cfg *config.Config,
+    jwtService JwtServiceInterface,
+    redis *redis.Client,
+) UserServiceInterface {
+    return &userService{
+        repo:       repo,
+        cfg:        cfg,
+        jwtService: jwtService,
+        redis:      redis,
+    }
+}
+```
+
+Ini disebut **Dependency Injection melalui constructor**.
+
+`UserService` tidak membuat dependency-nya sendiri.
+
+Contoh yang dihindari:
+
+```go
+func NewUserService() UserServiceInterface {
+    jwtService := NewJwtService()
+    repo := NewUserRepository()
+
+    // ...
+}
+```
+
+Karena UserService menjadi terlalu mengetahui bagaimana dependency dibuat.
+
+Lebih baik:
+
+```text
+Application Composition
+        │
+        ├── Create Repository
+        ├── Create JWT Service
+        ├── Create Redis
+        │
+        ▼
+    UserService
+```
+
+---
+
+# 29. Module Boundary melalui Interface
+
+Dengan pendekatan ini, module separation tidak hanya berbentuk:
+
+```text
+Folder Separation
+```
+
+tetapi juga:
+
+```text
+             Module Boundary
+                   │
+                   ▼
+        ┌─────────────────────┐
+        │      Interface      │
+        └─────────────────────┘
+                   │
+         ┌─────────┴─────────┐
+         ▼                   ▼
+     Consumer            Provider
+      Module               Module
+```
+
+Contoh:
+
+```text
+User Module
+    │
+    │ JwtServiceInterface
+    ▼
+JWT Module
+```
+
+Hal ini membuat dependency antar-module menjadi eksplisit.
+
+---
+
+# 30. Complete Dependency Flow
+
+Jika digabungkan, architecture project dapat digambarkan seperti berikut:
 
 ```text
                          Client
                            │
-                           │ HTTP
                            ▼
                     ┌─────────────┐
                     │   Handler   │
@@ -866,159 +1141,44 @@ Secara keseluruhan, request flow aplikasi dapat digambarkan seperti berikut:
                            │
                            ▼
                     ┌─────────────┐
-                    │   Service   │
+                    │ UserService │
                     └──────┬──────┘
                            │
-                  ┌────────┴────────┐
-                  │                 │
-                  ▼                 ▼
-               Domain          Repository
-                                    │
-                                    ▼
-                               PostgreSQL
+             ┌─────────────┼─────────────┐
+             │             │             │
+             ▼             ▼             ▼
+       Repository    JwtService      Redis Client
+       Interface     Interface
+             │             │
+             ▼             ▼
+       PostgreSQL       JWT Module
 ```
 
-Untuk upload:
+Perhatikan bahwa User Service tidak mengetahui detail implementasi JWT.
+
+User hanya mengetahui:
 
 ```text
-Handler
-   │
-   ▼
-Service
-   │
-   ▼
-Storage Adapter
-   │
-   ▼
-MinIO
+JwtServiceInterface
+```
+
+Begitu juga User Service tidak mengetahui detail database.
+
+User hanya mengetahui:
+
+```text
+UserRepositoryInterface
 ```
 
 ---
 
-# 24. Separation of Concerns
+# 31. Layered Architecture + Module Separation
 
-Arsitektur ini memisahkan beberapa tanggung jawab:
+Dengan demikian, terdapat dua bentuk pemisahan yang berjalan bersamaan.
 
-| Layer        | Responsibility                                   |
-| ------------ | ------------------------------------------------ |
-| `handler`    | HTTP request/response                            |
-| `service`    | Business/application logic                       |
-| `domain`     | Business entity dan model                        |
-| `repository` | Database access                                  |
-| `storage`    | Object storage                                   |
-| `middleware` | Cross-cutting concern                            |
-| `config`     | Configuration dan infrastructure initialization  |
-| `app`        | Dependency injection dan application composition |
-| `database`   | Migration dan seed                               |
-| `deployment` | Deployment/infrastructure                        |
-| `cmd`        | Application command                              |
-| `utils`      | Generic helper                                   |
+## Layer Separation
 
-Dengan separation tersebut, perubahan pada satu concern tidak harus menyebabkan perubahan pada seluruh aplikasi.
-
----
-
-# 25. Apakah Struktur Ini Sudah Modular?
-
-**Ya, secara logical aplikasi ini sudah melakukan pemisahan module/fitur.**
-
-Contohnya dapat dilihat dari:
-
-```text
-User
-├── user_entity.go
-├── user_model.go
-├── user_service.go
-├── user_repository.go
-├── user_handler.go
-├── user_request.go
-└── user_response.go
-```
-
-Begitu juga:
-
-```text
-JWT
-├── jwt_entity.go
-└── jwt_service.go
-```
-
-dan:
-
-```text
-Health Check
-├── health_check_entity.go
-├── health_check_service.go
-└── health_check_handler.go
-```
-
-Artinya setiap fitur/domain sudah memiliki bagian masing-masing di dalam layer.
-
-Secara konseptual:
-
-```text
-                  Application
-                       │
-       ┌───────────────┼────────────────┐
-       │               │                │
-       ▼               ▼                ▼
-     User             JWT          Health Check
-       │               │                │
-       ├── Domain      ├── Domain       ├── Domain
-       ├── Service     ├── Service      ├── Service
-       └── Adapter     └── Adapter      └── Adapter
-```
-
----
-
-# 26. Layered Architecture vs Modular Monolith
-
-Penting untuk membedakan dua konsep ini.
-
-### Layered Architecture
-
-Menentukan **bagaimana tanggung jawab teknis dipisahkan**:
-
-```text
-Handler
-   ↓
-Service
-   ↓
-Domain
-   ↓
-Repository
-```
-
-### Modular Architecture
-
-Menentukan **bagaimana business domain dipisahkan**:
-
-```text
-User
-Product
-Order
-Payment
-```
-
-Keduanya dapat digunakan secara bersamaan.
-
-Pada project ini, struktur saat ini lebih kuat merepresentasikan:
-
-```text
-Layered Architecture
-        +
-Logical Module Separation
-```
-
-Daripada strict Modular Monolith.
-
----
-
-# 27. Kesimpulan
-
-Struktur project saat ini sudah memiliki **separation of concerns yang baik**.
-
-Layer-layer utama telah dipisahkan:
+Memisahkan **technical responsibility**:
 
 ```text
 Handler
@@ -1030,61 +1190,133 @@ Domain
 Repository / Storage
 ```
 
-Selain itu, fitur/domain juga sudah dipisahkan secara logical.
+## Module Separation
+
+Memisahkan **business responsibility**:
+
+```text
+User
+JWT
+Health Check
+```
+
+## Interface Separation
+
+Memisahkan **dependency antar-module**:
+
+```text
+User
+ │
+ └── JwtServiceInterface
+            │
+            ▼
+          JWT
+```
+
+Sehingga architecture dapat digambarkan:
+
+```text
+                 Application
+                     │
+       ┌─────────────┼─────────────┐
+       │             │             │
+       ▼             ▼             ▼
+     User           JWT       Health Check
+       │             │             │
+       │             │             │
+   ┌───┴────┐        │        ┌────┴─────┐
+   │        │        │        │          │
+Handler  Service   Service  Handler    Service
+   │        │        │        │          │
+   │        └───┐    │        └────┐     │
+   │            │    │             │     │
+   │       Interfaces             │     │
+   │            │    │             │     │
+   └────────────┴────┴─────────────┴─────┘
+```
+
+---
+
+# 32. Kesimpulan
+
+Arsitektur project ini sudah menerapkan **Layered Architecture** dengan separation of concerns yang cukup jelas.
+
+Setiap bagian memiliki tanggung jawab masing-masing:
+
+```text
+Handler
+    → HTTP communication
+
+Service
+    → Business/Application Logic
+
+Domain
+    → Business Entity / Model
+
+Repository
+    → Database Access
+
+Storage
+    → Object Storage
+
+Middleware
+    → Cross-cutting Concern
+
+Config
+    → Configuration & Infrastructure
+
+App
+    → Dependency Injection & Composition
+```
+
+Selain pemisahan layer, project ini juga sudah melakukan **logical module separation**.
 
 Contohnya:
 
 ```text
 User
-├── Entity
-├── Model
-├── Service
-├── Repository
-├── Handler
-├── Request
-└── Response
+JWT
+Health Check
 ```
 
-Sehingga dapat disimpulkan bahwa aplikasi ini **sudah memisahkan module/fitur secara logical**, meskipun pemisahan filesystem utamanya masih menggunakan pendekatan **layer-based**.
+dan dependency antar-module tidak harus menggunakan concrete implementation.
 
-Dengan kata lain:
-
-> **Project ini menggunakan Layered Architecture dengan pemisahan module/domain secara logical.**
-
-Pendekatan ini memberikan separation of concerns yang baik dan menjadi fondasi yang cukup kuat untuk berkembang menuju **Modular Monolith** apabila jumlah domain dan kompleksitas aplikasi semakin bertambah.
-
-Jika suatu saat ingin membuat boundary module menjadi lebih kuat, struktur dapat dievolusikan dari:
+Contohnya:
 
 ```text
-internal/
-├── adapter/
-├── core/
-└── middleware/
+UserService
+     │
+     ▼
+JwtServiceInterface
+     ▲
+     │
+JwtService
 ```
 
-menjadi:
+serta:
 
 ```text
-internal/
-├── user/
-│   ├── domain/
-│   ├── service/
-│   ├── repository/
-│   └── handler/
-│
-├── product/
-│   ├── domain/
-│   ├── service/
-│   ├── repository/
-│   └── handler/
-│
-└── order/
-    ├── domain/
-    ├── service/
-    ├── repository/
-    └── handler/
+UserService
+     │
+     ▼
+UserRepositoryInterface
+     ▲
+     │
+UserRepository
 ```
 
-Namun refactor tersebut **bukan sebuah kewajiban**. Struktur saat ini sudah valid untuk aplikasi monolith yang menerapkan separation of concerns dan logical module separation.
+Dengan demikian, module tidak terlalu bergantung pada detail implementation module lainnya.
 
-> **Intinya: Layer memisahkan technical responsibility, sedangkan module memisahkan business responsibility.**
+### Kesimpulan utama
+
+> **Project ini menggunakan Layered Architecture dengan logical module separation dan Dependency Inversion melalui interface.**
+
+Layer digunakan untuk memisahkan **technical responsibility**, sedangkan module/feature digunakan untuk memisahkan **business responsibility**.
+
+Interface kemudian digunakan sebagai **boundary antar-component/module**, sehingga sebuah module cukup mengetahui capability yang dibutuhkannya tanpa mengetahui detail implementasi dari module lain.
+
+Dengan fondasi seperti ini, aplikasi masih dapat berjalan sebagai **monolith**, tetapi memiliki struktur dan dependency boundary yang lebih terkontrol.
+
+Apabila di masa depan salah satu module memiliki kebutuhan untuk scaling, deployment, ownership, atau fault isolation secara independen, module tersebut memiliki fondasi yang lebih baik untuk diekstrak menjadi **microservice**.
+
+> **Layer memisahkan tanggung jawab teknis, module memisahkan tanggung jawab bisnis, dan interface membatasi dependency antar-module.**
